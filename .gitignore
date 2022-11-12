@@ -2,5 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+
 renv/*
+!renv/activate.R
+
 man/*
