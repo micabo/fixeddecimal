@@ -153,9 +153,8 @@ print.decimal <- function(x, ...) {
 
 # rounding ---------------------------------------------------------------------
 
-
 round_to_10ths <- function(x) {
-  stopifnot(is.bigz(x))
+  stopifnot(is.bigz(x) && length(x) == 1)
   remainder <- x %% 10
   if (remainder < 5) {
     x - remainder
@@ -165,6 +164,13 @@ round_to_10ths <- function(x) {
 }
 
 
+round_to_10ths_vectorized <- function(x) {
+  as.bigz(sapply(x, function(.x) as.character(round_to_10ths(.x))))
+}
+
+
+#' Round decimal value
+#'
 #' Round ('round half away from zero') decimal to `digits` decimal digits
 #'
 #' @param x A vector of type decimal
@@ -182,7 +188,7 @@ round.decimal <- function(x, digits = 0L) {
   } else if (digits < ndecimals(x)) {
     ndiff <- ndecimals(x) - digits
     z <- as.bigz(x) %/% 10^(ndiff-1)
-    z <- round_to_10ths(z) %/% 10
+    z <- round_to_10ths_vectorized(z) %/% 10
     new_decimal(z, digits)
   } else {
     stop("Argument 'digits' larger than decimal places of decimal.\n",
@@ -210,7 +216,7 @@ Summary.decimal <- function(..., na.rm) {
   stop("Summary not implemented for decimal")
 }
 
-# arithmetic functions ---------------------------------------------------------
+# relational operators functions -----------------------------------------------
 
 #' @export
 `<.decimal` <- function(x, y) {
@@ -255,6 +261,10 @@ Summary.decimal <- function(..., na.rm) {
   NextMethod()
 }
 
+
+# arithmetic functions ---------------------------------------------------------
+# TODO
+# - properly implement multiplication, division, etc.
 
 #' @export
 `+.decimal` <- function(x, y) {
