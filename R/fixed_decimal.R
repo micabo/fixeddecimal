@@ -9,7 +9,10 @@ new_decimal <- function(x, ndecimals) {
 }
 
 
-#' Create a variable of type (fixed-point) decimal
+#' Fixed-decimal vector
+#'
+#' Creates fixed-decimal numbers given as strings, e.g. '1.23'.
+#' The string with the most decimal digits defines the decimal places for all elements.
 #'
 #' @param x A character vector specifying the decimals
 #'
@@ -44,7 +47,8 @@ decimal <- function(x) {
   structure(x, ndecimals = max_ndecimals, class = c("decimal", class(x)))
 }
 
-
+#' Fixed-decimal vector
+#'
 #' Convert a variable of type character to (fixed-point) decimal (same as 'decimal')
 #'
 #' @param x A character vector specifying the decimals
@@ -147,10 +151,104 @@ print.decimal <- function(x, ...) {
 }
 
 
-# mathematical functions -------------------------------------------------------
+# rounding ---------------------------------------------------------------------
+
+
+round_to_10ths <- function(x) {
+  stopifnot(is.bigz(x))
+  remainder <- x %% 10
+  if (remainder < 5) {
+    x - remainder
+  } else {
+    x + 10 - remainder
+  }
+}
+
+
+#' Round ('round half away from zero') decimal to `digits` decimal digits
+#'
+#' @param x A vector of type decimal
+#' @param digits An integer >= 0, number of decimals to round to
+#'
+#' @return A rounded decimal z with ndecimals(z) == digits
+#' @export
+#'
+#' @examples
+#' round(decimal("1.25"), 1)
+round.decimal <- function(x, digits = 0L) {
+  digits <- as.integer(digits)
+  if (digits == ndecimals(x)) {
+    x
+  } else if (digits < ndecimals(x)) {
+    ndiff <- ndecimals(x) - digits
+    z <- as.bigz(x) %/% 10^(ndiff-1)
+    z <- round_to_10ths(z) %/% 10
+    new_decimal(z, digits)
+  } else {
+    stop("Argument 'digits' larger than decimal places of decimal.\n",
+         "Cannot increase precision by rounding")
+  }
+}
+
+
+# override group generics ------------------------------------------------------
+
+#' @export
+Math.decimal <- function(x) {
+  stop("Math not implemented for decimal")
+}
+
+
+#' @export
+Ops.decimal <- function(x) {
+  stop("Ops not implemented for decimal")
+}
+
+
+#' @export
+Summary.decimal <- function(x) {
+  stop("Summary not implemented for decimal")
+}
+
+# arithmetic functions ---------------------------------------------------------
+
+#' @export
+`<.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  NextMethod()
+}
+
+
+#' @export
+`>.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  NextMethod()
+}
+
+
+#' @export
+`<=.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  NextMethod()
+}
+
+
+#' @export
+`>=.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  NextMethod()
+}
+
 
 #' @export
 `==.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  NextMethod()
+}
+
+
+#' @export
+`!=.decimal` <- function(x, y) {
   stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -171,45 +269,21 @@ print.decimal <- function(x, ...) {
 
 
 # TODO:
-# *.decimal etc.
+# - multiplication
+# - division
+# - exponentiation
+# - roots
 
 
-.round_to_10ths <- function(x) {
-  stopifnot(is.bigz(x))
-  remainder <- x %% 10
-  if (remainder < 5) {
-    x - remainder
-  } else {
-    x + 10 - remainder
-  }
+#' @export
+min.decimal <- function(..., na.rm = FALSE) {
+  new_decimal(NextMethod(), ndecimals(...))
 }
 
 
-
-#' Round (strategy ...) decimal to `digits` decimal digits
-#'
-#' @param x A vector of type decimal
-#' @param digits An integer >= 0, number of decimals to round to
-#'
-#' @return A rounded decimal z with ndecimals(z) == digits
 #' @export
-#'
-#' @examples
-#' round(decimal("1.25"), 1)
-round.decimal <- function(x, digits = 0L) {
-  digits <- as.integer(digits)
-  if (digits == ndecimals(x)) {
-    x
-  } else if (digits < ndecimals(x)) {
-    # TODO
-    ndiff <- ndecimals(x) - digits
-    z <- as.bigz(x) %/% 10^(ndiff-1)
-    z <- .round_to_10ths(z) %/% 10
-    new_decimal(z, digits)
-  } else {
-    stop("Argument 'digits' larger than decimal places of decimal.\n",
-         "Cannot increase precision by rounding")
-  }
+max.decimal <- function(..., na.rm = FALSE) {
+  new_decimal(NextMethod(), ndecimals(...))
 }
 
 
@@ -232,47 +306,7 @@ mean.decimal <- function(x, ..., na.rm = FALSE) {
     # Re-write using NextMethod or use round.decimal -> need to implement division
     x_mean <- sum(x, na.rm = TRUE)
     x_mean <- as.bigz(x_mean) * 10 / (length(x) - sum(is.na(x)))
-    x_mean <- .round_to_10ths(as.bigz(x_mean)) %/% 10
+    x_mean <- round_to_10ths(as.bigz(x_mean)) %/% 10
     new_decimal(x_mean, ndecimals = ndecimals(x))
   }
-}
-
-
-# TODO
-# - var and sd are not s3 generic! -> they will not be called!!!
-# - implement square root!
-
-#' Variance
-#'
-#' @param x A vector of type decimal
-#' @param na.rm Logical. Remove NAs?
-#'
-#' @return The variance of the decimals (or NA)
-#' @export
-#'
-#' @examples
-#' var(decimal(c("1.23", "1.00", "0.15")))
-var.decimal <- function(x, na.rm = FALSE) {
-  # TODO
-  # correct implementation!
-  x_var <- var(as.double(x), na.rm = na.rm)
-  decimal(as.character(x_var))
-}
-
-
-#' Standard deviation
-#'
-#' @param x A vector of type decimal
-#' @param na.rm Logical. Remove NAs?
-#'
-#' @return The standard deviation of the decimals (or NA)
-#' @export
-#'
-#' @examples
-#' sd(decimal(c("1.23", "1.00", "0.15")))
-sd.decimal <- function(x, na.rm = FALSE) {
-  # TODO
-  # correct implementation
-  x_sd <- sd(as.double(x), na.rm = na.rm)
-  decimal(as.character(x_sd))
 }
