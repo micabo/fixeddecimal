@@ -1,6 +1,6 @@
 source("renv/activate.R")
 
 if (interactive()) {
-  library(sloop)
-  library(devtools)
+  require(sloop, quietly = TRUE)
+  require(devtools, quietly = TRUE)
 }

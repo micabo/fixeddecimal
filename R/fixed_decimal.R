@@ -194,19 +194,19 @@ round.decimal <- function(x, digits = 0L) {
 # override group generics ------------------------------------------------------
 
 #' @export
-Math.decimal <- function(x) {
+Math.decimal <- function(x, ...) {
   stop("Math not implemented for decimal")
 }
 
 
 #' @export
-Ops.decimal <- function(x) {
+Ops.decimal <- function(e1, e2) {
   stop("Ops not implemented for decimal")
 }
 
 
 #' @export
-Summary.decimal <- function(x) {
+Summary.decimal <- function(..., na.rm) {
   stop("Summary not implemented for decimal")
 }
 
@@ -214,6 +214,8 @@ Summary.decimal <- function(x) {
 
 #' @export
 `<.decimal` <- function(x, y) {
+  # naive implementation, could also round the number with more decimal places
+  # and compare after that
   stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -268,11 +270,39 @@ Summary.decimal <- function(x) {
 }
 
 
-# TODO:
-# - multiplication
-# - division
-# - exponentiation
-# - roots
+#' @export
+`*.decimal` <- function(x, y) {
+  # naive implementation...
+  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  new_decimal(NextMethod(), ndecimals(x) * 2L)
+}
+
+
+#' @export
+`/.decimal` <- function(x, y) {
+  # pseudo implementation
+  decimal(as.character(as.double(x) / as.double(y)))
+}
+
+
+#' @export
+`^.decimal` <- function(x, y) {
+  # pseudo implementation
+  decimal(as.character(as.double(x)^as.double(y)))
+}
+
+
+#' @export
+`sqrt.decimal` <- function(x) {
+  # pseudo implementation
+  decimal(as.character(sqrt(as.double(x))))
+}
+
+
+#' @export
+`abs.decimal` <- function(x) {
+  new_decimal(NextMethod(), ndecimals(x))
+}
 
 
 #' @export
