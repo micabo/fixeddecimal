@@ -4,7 +4,8 @@
 # constructors -----------------------------------------------------------------
 
 new_decimal <- function(x, ndecimals) {
-  stopifnot(is.bigz(x) && is.integer(ndecimals) && ndecimals >= 0)
+  ndecimals <- as.integer(ndecimals)
+  stopifnot(is.bigz(x) && ndecimals >= 0)
   structure(x, ndecimals = ndecimals, class = c("decimal", class(x)))
 }
 
@@ -154,18 +155,9 @@ print.decimal <- function(x, ...) {
 # rounding ---------------------------------------------------------------------
 
 round_to_10ths <- function(x) {
-  stopifnot(is.bigz(x) && length(x) == 1)
+  stopifnot(is.bigz(x))
   remainder <- x %% 10
-  if (remainder < 5) {
-    x - remainder
-  } else {
-    x + 10 - remainder
-  }
-}
-
-
-round_to_10ths_vectorized <- function(x) {
-  as.bigz(sapply(x, function(.x) as.character(round_to_10ths(.x))))
+  x - remainder + 10*(remainder >= 5)
 }
 
 
@@ -187,12 +179,14 @@ round.decimal <- function(x, digits = 0L) {
     x
   } else if (digits < ndecimals(x)) {
     ndiff <- ndecimals(x) - digits
-    z <- as.bigz(x) %/% 10^(ndiff-1)
-    z <- round_to_10ths_vectorized(z) %/% 10
+    z <- as.bigz(x) %/% 10^(ndiff - 1)
+    z <- round_to_10ths(z) %/% 10
     new_decimal(z, digits)
   } else {
-    stop("Argument 'digits' larger than decimal places of decimal.\n",
-         "Cannot increase precision by rounding")
+    stop(
+      "Argument 'digits' larger than decimal places of decimal.\n",
+      "Cannot increase precision by rounding"
+    )
   }
 }
 
@@ -222,42 +216,42 @@ Summary.decimal <- function(..., na.rm) {
 `<.decimal` <- function(x, y) {
   # naive implementation, could also round the number with more decimal places
   # and compare after that
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
 
 
 #' @export
 `>.decimal` <- function(x, y) {
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
 
 
 #' @export
 `<=.decimal` <- function(x, y) {
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
 
 
 #' @export
 `>=.decimal` <- function(x, y) {
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
 
 
 #' @export
 `==.decimal` <- function(x, y) {
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
 
 
 #' @export
 `!=.decimal` <- function(x, y) {
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
 
@@ -268,14 +262,14 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `+.decimal` <- function(x, y) {
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   new_decimal(NextMethod(), ndecimals(x))
 }
 
 
 #' @export
 `-.decimal` <- function(x, y) {
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   new_decimal(NextMethod(), ndecimals(x))
 }
 
@@ -283,7 +277,7 @@ Summary.decimal <- function(..., na.rm) {
 #' @export
 `*.decimal` <- function(x, y) {
   # naive implementation...
-  stopifnot(is.decimal(x) && is.decimal(y) && ndecimals(x) == ndecimals(y))
+  stopifnot(ndecimals(x) == ndecimals(y))
   new_decimal(NextMethod(), ndecimals(x) * 2L)
 }
 

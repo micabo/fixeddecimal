@@ -20,3 +20,9 @@ test_that("addition and subtraction", {
 
   expect_error(decimal("1.23") + decimal("0.001"))
 })
+
+
+test_that("Noodeling", {
+  x <- decimal(c("18389229.12", "238828329.2024343", "1823892.0129389139289"))
+  mean(x) + new_decimal(as.bigz(19239128), 13L) - decimal("3892839.1928382920192")
+})
