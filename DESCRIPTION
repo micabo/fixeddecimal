@@ -1,10 +1,13 @@
 Package: fixeddecimal
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Provide simple fixed decimal arithmetic
+Version: 0.0.1
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person("micabo", "", , "37561518+micabo@users.noreply.github.com",
+           role = c("aut", "cre"))
+Description: Provide fixed decimal arithmetic for simple tasks.
+             Basic operations (e.g. +, -, *, /) are implemented, which will
+             retain the number of fractional decimal digits of their arguments.
+             Results will be rounded away from zero (for *, /, mean).
 License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

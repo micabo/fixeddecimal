@@ -195,20 +195,21 @@ round.decimal <- function(x, digits = 0L) {
 
 #' @export
 Math.decimal <- function(x, ...) {
-  stop("Math not implemented for decimal")
+  stop("Math functions not fully implemented for decimal")
 }
 
 
 #' @export
 Ops.decimal <- function(e1, e2) {
-  stop("Ops not implemented for decimal")
+  stop("Ops functions not fully implemented for decimal")
 }
 
 
 #' @export
 Summary.decimal <- function(..., na.rm) {
-  stop("Summary not implemented for decimal")
+  stop("Summary functions not fully implemented for decimal")
 }
+
 
 # relational operators functions -----------------------------------------------
 
@@ -257,8 +258,6 @@ Summary.decimal <- function(..., na.rm) {
 
 
 # arithmetic functions ---------------------------------------------------------
-# TODO
-# - properly implement multiplication, division, etc.
 
 #' @export
 `+.decimal` <- function(x, y) {
@@ -276,30 +275,18 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `*.decimal` <- function(x, y) {
-  # naive implementation...
   stopifnot(ndecimals(x) == ndecimals(y))
-  new_decimal(NextMethod(), ndecimals(x) * 2L)
+  z <- new_decimal(NextMethod(), ndecimals(x) * 2L)
+  round(z, ndecimals(x))
 }
 
 
 #' @export
 `/.decimal` <- function(x, y) {
-  # pseudo implementation
-  decimal(as.character(as.double(x) / as.double(y)))
-}
-
-
-#' @export
-`^.decimal` <- function(x, y) {
-  # pseudo implementation
-  decimal(as.character(as.double(x)^as.double(y)))
-}
-
-
-#' @export
-`sqrt.decimal` <- function(x) {
-  # pseudo implementation
-  decimal(as.character(sqrt(as.double(x))))
+  stopifnot(ndecimals(x) == ndecimals(y))
+  z <- as.bigz(x) * 10^(ndecimals(x) + 1) / as.bigz(y)
+  z <- round_to_10ths(as.bigz(z)) / 10
+  new_decimal(as.bigz(z), ndecimals(x))
 }
 
 
@@ -340,7 +327,7 @@ mean.decimal <- function(x, ..., na.rm = FALSE) {
     # Re-write using NextMethod or use round.decimal -> need to implement division
     x_mean <- sum(x, na.rm = TRUE)
     x_mean <- as.bigz(x_mean) * 10 / (length(x) - sum(is.na(x)))
-    x_mean <- round_to_10ths(as.bigz(x_mean)) %/% 10
-    new_decimal(x_mean, ndecimals = ndecimals(x))
+    x_mean <- round_to_10ths(as.bigz(x_mean)) / 10
+    new_decimal(as.bigz(x_mean), ndecimals = ndecimals(x))
   }
 }

@@ -22,7 +22,23 @@ test_that("addition and subtraction", {
 })
 
 
-test_that("Noodeling", {
-  x <- decimal(c("18389229.12", "238828329.2024343", "1823892.0129389139289"))
-  mean(x) + new_decimal(as.bigz(19239128), 13L) - decimal("3892839.1928382920192")
+test_that("multiplication is correct", {
+  x <- decimal("38.49")
+  y <- decimal("3.00")
+  z <- decimal("12.83")
+
+  expect_true(x * y == decimal("115.47"))
+  expect_true(x * z == decimal("493.83"))
+  expect_true(y * z == x)
+})
+
+
+test_that("division is correct", {
+  x <- decimal("38.49")
+  y <- decimal("3.00")
+  z <- decimal("12.83")
+
+  expect_true(x / y == z)
+  expect_true(x / z == y)
+  expect_true(y / z == decimal("0.23"))
 })
