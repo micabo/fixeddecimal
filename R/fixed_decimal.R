@@ -261,6 +261,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `+.decimal` <- function(x, y) {
+  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
   stopifnot(ndecimals(x) == ndecimals(y))
   new_decimal(NextMethod(), ndecimals(x))
 }
@@ -268,6 +269,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `-.decimal` <- function(x, y) {
+  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
   stopifnot(ndecimals(x) == ndecimals(y))
   new_decimal(NextMethod(), ndecimals(x))
 }
@@ -275,6 +277,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `*.decimal` <- function(x, y) {
+  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
   stopifnot(ndecimals(x) == ndecimals(y))
   z <- new_decimal(NextMethod(), ndecimals(x) * 2L)
   round(z, ndecimals(x))
@@ -283,6 +286,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `/.decimal` <- function(x, y) {
+  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
   stopifnot(ndecimals(x) == ndecimals(y))
   z <- as.bigz(x) * 10^(ndecimals(x) + 1) / as.bigz(y)
   z <- round_to_10ths(as.bigz(z)) / 10
