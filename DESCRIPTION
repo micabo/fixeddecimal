@@ -1,20 +1,20 @@
 Package: fixeddecimal
 Title: Provide simple fixed decimal arithmetic
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
     person("micabo", "", , "37561518+micabo@users.noreply.github.com",
            role = c("aut", "cre"))
 Description: Provide fixed decimal arithmetic for simple tasks.
              Basic operations (e.g. +, -, *, /) are implemented, which will
              retain the number of fractional decimal digits of their arguments.
-             Results will be rounded away from zero (for *, /, mean).
+             Results will be rounded away from zero (for *, /, mean, prod).
 License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
 Imports: 
-    gmp,
-    stringr
+    gmp (>= 0.6),
+    stringr (>= 0.3)
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
