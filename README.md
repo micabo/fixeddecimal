@@ -9,13 +9,13 @@ The decimal representation in this package is built on the data type `bigz` prov
 
 All operations (e.g. `+`, `-`, `*`, `/`, `mean`) on decimals x and y will require the decimals to have the same number of fractional decimal digits and will retain the number of decimals digits of the input variables.
 Operations `*`, `/` and `mean` will round the result (away from zero).
-Multiple operations of this type will lead to multiple rounding.
+Multiple operations of this type will lead to multiple rounding (try to use `prod`).
 
 ## Implemented
 
 - Arithmetic operations (`+`, `-`, `*`, `/`)
-- `sum`, `mean`
-- `min`, `max`
+- `sum`, `prod`, `mean`
+- `min`, `max`, `abs`
 - relational operators (`==`, `<`, ...)
 - `round.decimal`
 - Utilities (`c.decimal`, `print.decimal` etc.)

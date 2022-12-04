@@ -4,8 +4,9 @@
 # constructors -----------------------------------------------------------------
 
 new_decimal <- function(x, ndecimals) {
+  stopifnot(is.bigz(x))
   ndecimals <- as.integer(ndecimals)
-  stopifnot(is.bigz(x) && ndecimals >= 0)
+  stopifnot(ndecimals >= 0)
   structure(x, ndecimals = ndecimals, class = c("decimal", class(x)))
 }
 
@@ -43,10 +44,12 @@ decimal <- function(x) {
   x_int_str <- str_c(integer_digits, fractional_digits)
   x_int_str <- str_replace(x_int_str, "^0*", "")
   x_int_str <- ifelse(x_int_str == "", 0, x_int_str)
+  x_int_str[is.na(x)] <- NA
   x <- as.bigz(x_int_str)
 
   structure(x, ndecimals = max_ndecimals, class = c("decimal", class(x)))
 }
+
 
 #' Fixed-decimal vector
 #'
@@ -130,11 +133,13 @@ length.decimal <- function(x) {
 
 #' @export
 c.decimal <- function(...) {
-  args <- list(...)
-  num_is_decimal <- vapply(args, is.decimal, logical(1))
-  decimal_places <- vapply(args, ndecimals, integer(1))
-  decimal_places_equal <- min(decimal_places) == max(decimal_places)
+  argv <- list(...)
 
+  num_is_decimal <- vapply(argv, is.decimal, logical(1))
+  if (!isTRUE(all(num_is_decimal))) stop("Cannot concatenate different types")
+
+  decimal_places <- vapply(argv, ndecimals, integer(1))
+  decimal_places_equal <- min(decimal_places) == max(decimal_places)
   if (!all(num_is_decimal) || !decimal_places_equal) {
     stop("Cannot concatenate decimals with different number of decimal places")
   }
@@ -217,6 +222,7 @@ Summary.decimal <- function(..., na.rm) {
 `<.decimal` <- function(x, y) {
   # naive implementation, could also round the number with more decimal places
   # and compare after that
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -224,6 +230,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `>.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -231,6 +238,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `<=.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -238,6 +246,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `>=.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -245,6 +254,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `==.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -252,6 +262,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `!=.decimal` <- function(x, y) {
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   NextMethod()
 }
@@ -261,7 +272,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `+.decimal` <- function(x, y) {
-  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   new_decimal(NextMethod(), ndecimals(x))
 }
@@ -269,7 +280,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `-.decimal` <- function(x, y) {
-  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   new_decimal(NextMethod(), ndecimals(x))
 }
@@ -277,7 +288,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `*.decimal` <- function(x, y) {
-  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   z <- new_decimal(NextMethod(), ndecimals(x) * 2L)
   round(z, ndecimals(x))
@@ -286,7 +297,7 @@ Summary.decimal <- function(..., na.rm) {
 
 #' @export
 `/.decimal` <- function(x, y) {
-  stopifnot(inherits(x, "decimal") && inherits(y, "decimal"))
+  stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   z <- as.bigz(x) * 10^(ndecimals(x) + 1) / as.bigz(y)
   z <- round_to_10ths(as.bigz(z)) / 10
@@ -295,7 +306,7 @@ Summary.decimal <- function(..., na.rm) {
 
 
 #' @export
-`abs.decimal` <- function(x) {
+abs.decimal <- function(x) {
   new_decimal(NextMethod(), ndecimals(x))
 }
 
@@ -313,11 +324,28 @@ max.decimal <- function(..., na.rm = FALSE) {
 
 
 #' @export
-sum.decimal <- function(x, ..., na.rm = FALSE) {
-  if (!na.rm && any(is.na(x))) {
-    new_decimal(as.bigz(NA), ndecimals = ndecimals(x))
+sum.decimal <- function(..., na.rm = FALSE) {
+  argv <- c(...)
+  decimal_places <- ndecimals(argv)
+
+  if (!na.rm && any(is.na(argv))) {
+    new_decimal(as.bigz(NA), ndecimals = decimal_places)
   } else {
-    new_decimal(NextMethod(), ndecimals = ndecimals(x))
+    new_decimal(NextMethod(), ndecimals = decimal_places)
+  }
+}
+
+
+#' @export
+prod.decimal <- function(..., na.rm = FALSE) {
+  argv <- c(...)
+  decimal_places <- ndecimals(argv)
+
+  if (!na.rm && any(is.na(argv))) {
+    new_decimal(as.bigz(NA), ndecimals = decimal_places)
+  } else {
+    z <- new_decimal(NextMethod(), ndecimals = decimal_places * length(argv))
+    round(z, decimal_places)
   }
 }
 
@@ -327,10 +355,11 @@ mean.decimal <- function(x, ..., na.rm = FALSE) {
   if (!na.rm && any(is.na(x))) {
     new_decimal(as.bigz(NA), ndecimals = ndecimals(x))
   } else {
-    # TODO
-    # Re-write using NextMethod or use round.decimal -> need to implement division
-    x_mean <- sum(x, na.rm = TRUE)
-    x_mean <- as.bigz(x_mean) * 10 / (length(x) - sum(is.na(x)))
+    # Note: The calculation is implemented in the bigz world.
+    # Could also be implemented via sum.decimal, /.decimal, round.decimal,
+    # but this uses less conversions
+    x_mean <- sum(as.bigz(x), na.rm = TRUE) * 10
+    x_mean <- x_mean / (length(x) - sum(is.na(x)))
     x_mean <- round_to_10ths(as.bigz(x_mean)) / 10
     new_decimal(as.bigz(x_mean), ndecimals = ndecimals(x))
   }
