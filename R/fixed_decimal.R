@@ -364,3 +364,7 @@ mean.decimal <- function(x, ..., na.rm = FALSE) {
     new_decimal(as.bigz(x_mean), ndecimals = ndecimals(x))
   }
 }
+
+
+#' @export
+as.data.frame.decimal <- as.data.frame.vector
