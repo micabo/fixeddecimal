@@ -1,6 +1,8 @@
 # implement a data type for fixed decimal digits
 # based on the bigz data type from package gmp
 
+options(fixeddecimal.rounding = "half-away-from-zero")
+
 # constructors -----------------------------------------------------------------
 
 new_decimal <- function(x, ndecimals) {
@@ -178,14 +180,18 @@ round_to_10ths <- function(x) {
 #'
 #' @examples
 #' round(decimal("1.25"), 1)
-round.decimal <- function(x, digits = 0L) {
+round.decimal <- function(x, digits = 0L, strategy = getOption("fixeddecimal.rounding")) {
   digits <- as.integer(digits)
   if (digits == ndecimals(x)) {
     x
   } else if (digits < ndecimals(x)) {
     ndiff <- ndecimals(x) - digits
     z <- as.bigz(x) %/% 10^(ndiff - 1)
-    z <- round_to_10ths(z) %/% 10
+    if (strategy == "half-away-from-zero") {
+      z <- round_to_10ths(z) %/% 10
+    } else {
+      stop("Rounding strategy unknown")
+    }
     new_decimal(z, digits)
   } else {
     stop(
@@ -296,11 +302,16 @@ Summary.decimal <- function(..., na.rm) {
 
 
 #' @export
-`/.decimal` <- function(x, y) {
+`/.decimal` <- function(x, y, strategy = getOption("fixeddecimal.rounding")) {
   stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   z <- as.bigz(x) * 10^(ndecimals(x) + 1) / as.bigz(y)
-  z <- round_to_10ths(as.bigz(z)) / 10
+
+  if (strategy == "half-away-from-zero") {
+    z <- round_to_10ths(as.bigz(z)) / 10
+  } else {
+    stop("Rounding strategy unknown")
+  }
   new_decimal(as.bigz(z), ndecimals(x))
 }
 
@@ -351,7 +362,7 @@ prod.decimal <- function(..., na.rm = FALSE) {
 
 
 #' @export
-mean.decimal <- function(x, ..., na.rm = FALSE) {
+mean.decimal <- function(x, ..., na.rm = FALSE, strategy = getOption("fixeddecimal.rounding")) {
   if (!na.rm && any(is.na(x))) {
     new_decimal(as.bigz(NA), ndecimals = ndecimals(x))
   } else {
@@ -360,7 +371,11 @@ mean.decimal <- function(x, ..., na.rm = FALSE) {
     # but this uses less conversions
     x_mean <- sum(as.bigz(x), na.rm = TRUE) * 10
     x_mean <- x_mean / (length(x) - sum(is.na(x)))
-    x_mean <- round_to_10ths(as.bigz(x_mean)) / 10
+    if (strategy == "half-away-from-zero") {
+      x_mean <- round_to_10ths(as.bigz(x_mean)) / 10
+    } else {
+      stop("Rounding strategy unknown")
+    }
     new_decimal(as.bigz(x_mean), ndecimals = ndecimals(x))
   }
 }
