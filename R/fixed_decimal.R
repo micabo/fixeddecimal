@@ -165,30 +165,34 @@ print.decimal <- function(x, ...) {
 
 # rounding ---------------------------------------------------------------------
 
-round_to_10ths_afz <- function(x) {
+round_to_10_afz <- function(x) {
   # Round to 10ths, away-from-zero
   # Note: could not be implemented with ifelse (does work with bigz)
   stopifnot(is.bigz(x))
-  z <- x * sign(x)
+  z <- abs(x)
   remainder <- z %% 10
-  z <- z - remainder + 10*(remainder >= 5)
+  z <- z - remainder + 10 * (remainder >= 5)
   z * sign(x)
 }
 
 
-round_to_10ths_rte <- function(x) {
-  # Round to 10ths, round-to-even
-  # TO BE IMPLEMENTED
+round_to_10_rtz <- function(x) {
+  # Round to 10ths, round-to-zero
+  stopifnot(is.bigz(x))
+  z <- abs(x)
+  remainder <- z %% 10
+  z <- z - remainder + 10 * (remainder > 5)
+  z * sign(x)
 }
 
 
 round_with_strategy <- function(x, strategy) {
-  if (strategy == "away-from-zero") {
-    z <- round_to_10ths_afz(z) %/% 10
-  } else {
+  stopifnot(is.bigz(x))
+  switch(strategy,
+    "away-from-zero" = round_to_10_afz(x) %/% 10,
+    "round-to-zero" = round_to_10_rtz(x) %/% 10,
     stop("Rounding strategy '", strategy, "' unknown")
-  }
-  z
+  )
 }
 
 
@@ -326,7 +330,7 @@ Summary.decimal <- function(..., na.rm) {
   stopifnot(is.decimal(x) && is.decimal(y))
   stopifnot(ndecimals(x) == ndecimals(y))
   z <- as.bigz(x) * 10^(ndecimals(x) + 1) / as.bigz(y)
-  z <- round_with_strategy(z, strategy)
+  z <- round_with_strategy(as.bigz(z), strategy)
   new_decimal(as.bigz(z), ndecimals(x))
 }
 
@@ -383,11 +387,11 @@ mean.decimal <- function(x, ..., na.rm = FALSE, strategy = getOption("fixeddecim
   } else {
     # Note: The calculation is implemented in the bigz world.
     # Could also be implemented via sum.decimal, /.decimal, round.decimal,
-    # but this uses less conversions
+    # but this uses fewer conversions
     x_mean <- sum(as.bigz(x), na.rm = TRUE) * 10
     x_mean <- x_mean / (length(x) - sum(is.na(x)))
-    x_mean <- round_with_strategy(x_mean, strategy)
-    new_decimal(as.bigz(x_mean), ndecimals = ndecimals(x))
+    x_mean <- round_with_strategy(as.bigz(x_mean), strategy)
+    new_decimal(x_mean, ndecimals = ndecimals(x))
   }
 }
 
